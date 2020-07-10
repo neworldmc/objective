@@ -143,19 +143,12 @@ class RegionFile(file: Path, folder: Path, version: RegionFileVersion) : AutoClo
 
     @Synchronized
     override fun close() {
-        try {
-            padToFullSector()
-        } finally {
-            try {
-                writeHeader()
-            } finally {
-                try {
-                    file.force(true)
-                } finally {
-                    file.close()
-                }
-            }
-        }
+        val exceptions = mutableListOf<Throwable>()
+        runCatching { padToFullSector() }.onFailure { exceptions.add(it) }
+        runCatching { writeHeader() }.onFailure { exceptions.add(it) }
+        runCatching { file.force(true) }.onFailure { exceptions.add(it) }
+        runCatching { file.close() }.onFailure { exceptions.add(it) }
+        if (exceptions.isNotEmpty()) throw exceptions.reduce { first, second -> first.addSuppressed(second); first }
     }
 
     private fun readChunkStream(pos: ChunkPos, version: Byte, inputStream: InputStream): ByteArray {
