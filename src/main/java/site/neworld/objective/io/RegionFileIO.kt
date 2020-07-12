@@ -1,4 +1,4 @@
-package site.neworld.objective.regionstorage
+package site.neworld.objective.io
 
 import net.minecraft.core.ChunkPos
 import org.apache.logging.log4j.LogManager

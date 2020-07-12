@@ -1,1 +1,1 @@
-[![Build Status](http://akarinci.newinfinideas.cn/app/rest/builds/Regular(id:NEWorldMC_ObjectiveRegionstorage)/statusIcon)](http://akarinci.newinfinideas.cn//viewType.html?RegularId=NEWorldMC_ObjectiveRegionstorage&guest=1)
+[![Build Status](http://akarinci.newinfinideas.cn/app/rest/builds/Regular(id:NEWorldMC_Objective)/statusIcon)](http://akarinci.newinfinideas.cn//viewType.html?RegularId=NEWorldMC_Objective&guest=1)

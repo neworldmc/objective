@@ -1,4 +1,4 @@
-package site.neworld.objective.regionstorage
+package site.neworld.objective.io
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
 import net.minecraft.core.ChunkPos

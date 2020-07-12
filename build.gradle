@@ -45,5 +45,5 @@ compileTestKotlin {
 }
 
 application {
-    mainClassName 'site.neworld.objective.regionstorage.RegionStorageKt'
+    mainClassName 'site.neworld.objective.ObjectiveKt'
 }
