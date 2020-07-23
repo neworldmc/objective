@@ -7,6 +7,10 @@ import io.netty.handler.codec.CorruptedFrameException
 import io.netty.handler.codec.EncoderException
 import io.netty.handler.codec.MessageToByteEncoder
 
+data class InboundFrame(val operation: InboundOperation, val data: ByteBuf)
+
+enum class InboundOperation { READ, WRITE }
+
 class VarInt32LengthFieldBasedFrameDecoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, buf: ByteBuf, out: MutableList<Any>) {
         buf.markReaderIndex()
@@ -31,8 +35,8 @@ class VarInt32LengthFieldBasedFrameDecoder : ByteToMessageDecoder() {
 
 class VarInt32LengthFieldBasedFrameEncoder : MessageToByteEncoder<ByteBuf>() {
     override fun encode(ctx: ChannelHandlerContext, frame: ByteBuf, buf: ByteBuf) {
-        var payloadLength = frame.readableBytes()
         val varIntList = mutableListOf<Int>()
+        var payloadLength = frame.readableBytes()
         while (payloadLength > 0) {
             varIntList.add(payloadLength and 127 or 128)
             payloadLength = payloadLength shr 7
@@ -43,4 +47,3 @@ class VarInt32LengthFieldBasedFrameEncoder : MessageToByteEncoder<ByteBuf>() {
         buf.writeBytes(frame)
     }
 }
-
