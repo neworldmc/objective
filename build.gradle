@@ -1,7 +1,12 @@
+buildscript {
+    ext.koin_version= "2.1.6"
+    ext.kotlin_version= "1.3.72"
+}
+
 plugins {
     id 'java'
     id 'application'
-    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
 }
 
 group 'site.neworld'
@@ -9,11 +14,17 @@ version '0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.72'
+    // kotlin
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1'
+    // dependency injection
+    implementation "org.koin:koin-core:$koin_version"
+    implementation "org.koin:koin-core-ext:$koin_version"
+
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
     implementation 'org.apache.commons:commons-lang3:3.9'
     implementation 'commons-io:commons-io:2.6'
@@ -39,6 +50,9 @@ compileTestJava {
 
 compileKotlin {
     kotlinOptions.jvmTarget = '11'
+    kotlinOptions {
+        freeCompilerArgs = ["-XXLanguage:+InlineClasses"]
+    }
 }
 
 compileTestKotlin {
