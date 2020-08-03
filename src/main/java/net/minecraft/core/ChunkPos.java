@@ -1,11 +1,5 @@
 package net.minecraft.core;
 
-import java.util.Spliterators.AbstractSpliterator;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
-
 public class ChunkPos {
     public static final long INVALID_CHUNK_POS = asLong(1875016, 1875016);
     public final int x;

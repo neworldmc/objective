@@ -18,7 +18,7 @@ class Region(private val folder: File) : AutoCloseable {
         } else {
             if (regionCache.size >= 256) regionCache.removeLast().close()
             if (!folder.exists()) folder.mkdirs()
-            val mcaFile = FixedFATFile.open(File(folder, "r." + pos.regionX + "." + pos.regionZ + ".mca").toPath())
+            val mcaFile = FixedFATFile.open(File(folder, "r.${pos.regionX}.${pos.regionZ}.mca").toPath())
             val loadedRegion = RegionFile(mcaFile, folder)
             regionCache.putAndMoveToFirst(regionKey, loadedRegion)
             loadedRegion

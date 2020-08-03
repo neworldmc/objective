@@ -3,7 +3,6 @@ package site.neworld.objective.network
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
-import io.netty.handler.codec.CorruptedFrameException
 import io.netty.handler.codec.EncoderException
 import io.netty.handler.codec.MessageToByteEncoder
 
@@ -14,36 +13,16 @@ enum class InboundOperation { READ, WRITE }
 class VarInt32LengthFieldBasedFrameDecoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, buf: ByteBuf, out: MutableList<Any>) {
         buf.markReaderIndex()
-        var index = 0
-        var payloadLength = 0
-        do {
-            if (index >= 5) throw CorruptedFrameException("VarInt is too big")
-            if (!buf.isReadable) {
-                buf.resetReaderIndex()
-                return
-            }
-            val b = buf.readUnsignedByte().toInt()
-            payloadLength = payloadLength or (b and 127 shl index++ * 7)
-        } while (b and 128 != 0)
-        if (buf.readableBytes() < payloadLength) {
-            buf.resetReaderIndex()
-            return
-        }
-        out.add(buf.readBytes(payloadLength))
+        val len = buf.checkedReadVarInt()
+        if (len >= 0 && buf.readableBytes() >= len) out.add(buf.readBytes(len.toInt())) else buf.resetReaderIndex()
     }
 }
 
 class VarInt32LengthFieldBasedFrameEncoder : MessageToByteEncoder<ByteBuf>() {
     override fun encode(ctx: ChannelHandlerContext, frame: ByteBuf, buf: ByteBuf) {
-        val varIntList = mutableListOf<Int>()
-        var payloadLength = frame.readableBytes()
-        while (payloadLength > 0) {
-            varIntList.add(payloadLength and 127 or 128)
-            payloadLength = payloadLength shr 7
-        }
-        if (varIntList.isEmpty()) throw EncoderException("frame is void")
-        varIntList[varIntList.lastIndex] = varIntList[varIntList.lastIndex] and 127
-        buf.writeBytes(varIntList.map(Int::toByte).toByteArray())
+        val payloadLength = frame.readableBytes()
+        if (payloadLength == 0) throw EncoderException("void frame")
+        buf.writeVarInt(payloadLength)
         buf.writeBytes(frame)
     }
 }
