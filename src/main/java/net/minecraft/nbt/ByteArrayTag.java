@@ -10,12 +10,17 @@ import java.util.List;
 
 public class ByteArrayTag extends CollectionTag<ByteTag> {
     public static final TagType<ByteArrayTag> TYPE = new TagType<>() {
-        public ByteArrayTag load(DataInput local1_1, int local1_2, NbtAccounter local1_3) throws IOException {
-            local1_3.accountBits(192L);
-            int local1_4 = local1_1.readInt();
-            local1_3.accountBits(8L * (long) local1_4);
+        @Override
+        public boolean isValue() {
+            return false;
+        }
+
+        public ByteArrayTag load(DataInput input, int depth, SizeFence fence) throws IOException {
+            fence.accountBits(192L);
+            int local1_4 = input.readInt();
+            fence.accountBits(8L * (long) local1_4);
             byte[] local1_5 = new byte[local1_4];
-            local1_1.readFully(local1_5);
+            input.readFully(local1_5);
             return new ByteArrayTag(local1_5);
         }
 
@@ -48,9 +53,9 @@ public class ByteArrayTag extends CollectionTag<ByteTag> {
         return local2_1;
     }
 
-    public void write(DataOutput local3_1) throws IOException {
-        local3_1.writeInt(this.data.length);
-        local3_1.write(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(this.data.length);
+        output.write(this.data);
     }
 
     public byte getId() {

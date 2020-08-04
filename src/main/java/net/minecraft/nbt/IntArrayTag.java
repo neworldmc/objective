@@ -10,14 +10,19 @@ import java.util.List;
 
 public class IntArrayTag extends CollectionTag<IntTag> {
     public static final TagType<IntArrayTag> TYPE = new TagType<>() {
-        public IntArrayTag load(DataInput local1_1, int local1_2, NbtAccounter local1_3) throws IOException {
-            local1_3.accountBits(192L);
-            int local1_4 = local1_1.readInt();
-            local1_3.accountBits(32L * (long) local1_4);
+        @Override
+        public boolean isValue() {
+            return false;
+        }
+
+        public IntArrayTag load(DataInput input, int depth, SizeFence fence) throws IOException {
+            fence.accountBits(192L);
+            int local1_4 = input.readInt();
+            fence.accountBits(32L * (long) local1_4);
             int[] local1_5 = new int[local1_4];
 
             for (int local1_6 = 0; local1_6 < local1_4; ++local1_6) {
-                local1_5[local1_6] = local1_1.readInt();
+                local1_5[local1_6] = input.readInt();
             }
 
             return new IntArrayTag(local1_5);
@@ -52,15 +57,13 @@ public class IntArrayTag extends CollectionTag<IntTag> {
         return local2_1;
     }
 
-    public void write(DataOutput local3_1) throws IOException {
-        local3_1.writeInt(this.data.length);
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(this.data.length);
         int[] var2 = this.data;
-        int var3 = var2.length;
 
         for (int local3_2 : var2) {
-            local3_1.writeInt(local3_2);
+            output.writeInt(local3_2);
         }
-
     }
 
     public byte getId() {

@@ -1,32 +1,33 @@
-package net.minecraft.nbt;
+package net.minecraft.nbt
 
-import java.io.DataInput;
-import java.io.IOException;
+import java.io.DataInput
+import java.io.IOException
 
-public interface TagType<T extends Tag> {
-    T load(DataInput var1, int var2, NbtAccounter var3) throws IOException;
+interface TagType<T : Tag?> {
+    @Throws(IOException::class)
+    fun load(input: DataInput, depth: Int, fence: SizeFence): T
+    fun isValue() = false
+    fun getName(): String
+    fun getPrettyName(): String
+}
 
-    default boolean isValue() {
-        return false;
+private fun createInvalid(id: Int): TagType<EndTag> {
+    return object : TagType<EndTag> {
+        override fun load(input: DataInput, depth: Int, fence: SizeFence): EndTag {
+            throw IllegalArgumentException("Invalid tag id: $id")
+        }
+
+        override fun getName() = "INVALID[$id]"
+        override fun getPrettyName() = "UNKNOWN_$id"
     }
+}
 
-    String getName();
+object TagTypes {
+    private val TYPES =
+            arrayOf(EndTag.TYPE, ByteTag.TYPE, ShortTag.TYPE, IntTag.TYPE, LongTag.TYPE, FloatTag.TYPE,
+                    DoubleTag.TYPE, ByteArrayTag.TYPE, StringTag.TYPE, ListTag.TYPE, CompoundTag.TYPE, IntArrayTag.TYPE,
+                    LongArrayTag.TYPE)
 
-    String getPrettyName();
-
-    static TagType<EndTag> createInvalid(final int local4_0) {
-        return new TagType<>() {
-            public EndTag load(DataInput local1_1, int local1_2, NbtAccounter local1_3) {
-                throw new IllegalArgumentException("Invalid tag id: " + local4_0);
-            }
-
-            public String getName() {
-                return "INVALID[" + local4_0 + "]";
-            }
-
-            public String getPrettyName() {
-                return "UNKNOWN_" + local4_0;
-            }
-        };
-    }
+    @JvmStatic
+    fun getType(id: Int): TagType<*> = if (id >= 0 && id < TYPES.size) TYPES[id] else createInvalid(id)
 }

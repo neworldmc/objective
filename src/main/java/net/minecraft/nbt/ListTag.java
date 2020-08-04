@@ -14,22 +14,27 @@ import java.util.Objects;
 
 public class ListTag extends CollectionTag<Tag> {
     public static final TagType<ListTag> TYPE = new TagType<>() {
-        public ListTag load(DataInput local1_1, int local1_2, NbtAccounter local1_3) throws IOException {
-            local1_3.accountBits(296L);
-            if (local1_2 > 512) {
+        @Override
+        public boolean isValue() {
+            return false;
+        }
+
+        public ListTag load(DataInput input, int depth, SizeFence fence) throws IOException {
+            fence.accountBits(296L);
+            if (depth > 512) {
                 throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
             } else {
-                byte local1_4 = local1_1.readByte();
-                int local1_5 = local1_1.readInt();
+                byte local1_4 = input.readByte();
+                int local1_5 = input.readInt();
                 if (local1_4 == 0 && local1_5 > 0) {
                     throw new RuntimeException("Missing type on ListTag");
                 } else {
-                    local1_3.accountBits(32L * (long) local1_5);
+                    fence.accountBits(32L * (long) local1_5);
                     TagType<?> local1_6 = TagTypes.getType(local1_4);
                     List<Tag> local1_7 = Lists.newArrayListWithCapacity(local1_5);
 
                     for (int local1_8 = 0; local1_8 < local1_5; ++local1_8) {
-                        local1_7.add(local1_6.load(local1_1, local1_2 + 1, local1_3));
+                        local1_7.add(local1_6.load(input, depth + 1, fence));
                     }
 
                     return new ListTag(local1_7, local1_4);
@@ -59,18 +64,18 @@ public class ListTag extends CollectionTag<Tag> {
         this(Lists.newArrayList(), (byte) 0);
     }
 
-    public void write(DataOutput local2_1) throws IOException {
+    public void write(DataOutput output) throws IOException {
         if (this.list.isEmpty()) {
             this.type = 0;
         } else {
             this.type = this.list.get(0).getId();
         }
 
-        local2_1.writeByte(this.type);
-        local2_1.writeInt(this.list.size());
+        output.writeByte(this.type);
+        output.writeInt(this.list.size());
 
         for (Tag local2_2 : this.list) {
-            local2_2.write(local2_1);
+            local2_2.write(output);
         }
 
     }

@@ -11,14 +11,19 @@ import java.util.List;
 
 public class LongArrayTag extends CollectionTag<LongTag> {
     public static final TagType<LongArrayTag> TYPE = new TagType<>() {
-        public LongArrayTag load(DataInput local1_1, int local1_2, NbtAccounter local1_3) throws IOException {
-            local1_3.accountBits(192L);
-            int local1_4 = local1_1.readInt();
-            local1_3.accountBits(64L * (long) local1_4);
+        @Override
+        public boolean isValue() {
+            return false;
+        }
+
+        public LongArrayTag load(DataInput input, int depth, SizeFence fence) throws IOException {
+            fence.accountBits(192L);
+            int local1_4 = input.readInt();
+            fence.accountBits(64L * (long) local1_4);
             long[] local1_5 = new long[local1_4];
 
             for (int local1_6 = 0; local1_6 < local1_4; ++local1_6) {
-                local1_5[local1_6] = local1_1.readLong();
+                local1_5[local1_6] = input.readLong();
             }
 
             return new LongArrayTag(local1_5);
@@ -49,23 +54,17 @@ public class LongArrayTag extends CollectionTag<LongTag> {
     private static long[] toArray(List<Long> local3_0) {
         long[] local3_1 = new long[local3_0.size()];
 
-        for (int local3_2 = 0; local3_2 < local3_0.size(); ++local3_2) {
-            Long local3_3 = local3_0.get(local3_2);
-            local3_1[local3_2] = local3_3 == null ? 0L : local3_3;
+        for (int i = 0; i < local3_0.size(); ++i) {
+            Long v = local3_0.get(i);
+            local3_1[i] = v == null ? 0L : v;
         }
 
         return local3_1;
     }
 
-    public void write(DataOutput local4_1) throws IOException {
-        local4_1.writeInt(this.data.length);
-        long[] var2 = this.data;
-        int var3 = var2.length;
-
-        for (long local4_2 : var2) {
-            local4_1.writeLong(local4_2);
-        }
-
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(this.data.length);
+        for (long local4_2 : this.data) output.writeLong(local4_2);
     }
 
     public byte getId() {
@@ -77,17 +76,12 @@ public class LongArrayTag extends CollectionTag<LongTag> {
     }
 
     public String toString() {
-        StringBuilder local7_1 = new StringBuilder("[L;");
-
-        for (int local7_2 = 0; local7_2 < this.data.length; ++local7_2) {
-            if (local7_2 != 0) {
-                local7_1.append(',');
-            }
-
-            local7_1.append(this.data[local7_2]).append('L');
+        StringBuilder builder = new StringBuilder("[L;");
+        for (int i = 0; i < this.data.length; ++i) {
+            if (i != 0) builder.append(',');
+            builder.append(this.data[i]).append('L');
         }
-
-        return local7_1.append(']').toString();
+        return builder.append(']').toString();
     }
 
     public LongArrayTag copy() {

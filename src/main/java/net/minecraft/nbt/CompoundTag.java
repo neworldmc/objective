@@ -16,21 +16,26 @@ public class CompoundTag implements Tag {
     private static final Logger LOGGER = LogManager.getLogger();
     private static final Pattern SIMPLE_VALUE = Pattern.compile("[A-Za-z0-9._+-]+");
     public static final TagType<CompoundTag> TYPE = new TagType<>() {
-        public CompoundTag load(DataInput local1_1, int local1_2, NbtAccounter local1_3) throws IOException {
-            local1_3.accountBits(384L);
-            if (local1_2 > 512) {
+        @Override
+        public boolean isValue() {
+            return false;
+        }
+
+        public CompoundTag load(DataInput input, int depth, SizeFence fence) throws IOException {
+            fence.accountBits(384L);
+            if (depth > 512) {
                 throw new RuntimeException("Tried to read NBT tag with too high complexity, depth > 512");
             } else {
                 var local1_4 = Maps.<String, Tag>newHashMap();
 
                 byte local1_5;
-                while ((local1_5 = CompoundTag.readNamedTagType(local1_1, local1_3)) != 0) {
-                    String local1_6 = CompoundTag.readNamedTagName(local1_1, local1_3);
-                    local1_3.accountBits(224 + 16 * local1_6.length());
-                    Tag local1_7 = CompoundTag.readNamedTagData(TagTypes.getType(local1_5), local1_6, local1_1,
-                            local1_2 + 1, local1_3);
+                while ((local1_5 = CompoundTag.readNamedTagType(input, fence)) != 0) {
+                    String local1_6 = CompoundTag.readNamedTagName(input, fence);
+                    fence.accountBits(224 + 16 * local1_6.length());
+                    Tag local1_7 = CompoundTag.readNamedTagData(TagTypes.getType(local1_5), local1_6, input,
+                            depth + 1, fence);
                     if (local1_4.put(local1_6, local1_7) != null) {
-                        local1_3.accountBits(288L);
+                        fence.accountBits(288L);
                     }
                 }
 
@@ -56,14 +61,14 @@ public class CompoundTag implements Tag {
         this(Maps.newHashMap());
     }
 
-    public void write(DataOutput local2_1) throws IOException {
+    public void write(DataOutput output) throws IOException {
 
         for (String local2_2 : this.tags.keySet()) {
             Tag local2_3 = this.tags.get(local2_2);
-            writeNamedTag(local2_2, local2_3, local2_1);
+            writeNamedTag(local2_2, local2_3, output);
         }
 
-        local2_1.writeByte(0);
+        output.writeByte(0);
     }
 
     public Set<String> getAllKeys() {
@@ -376,16 +381,16 @@ public class CompoundTag implements Tag {
         }
     }
 
-    private static byte readNamedTagType(DataInput local50_0, NbtAccounter local50_1) throws IOException {
+    private static byte readNamedTagType(DataInput local50_0, SizeFence local50_1) throws IOException {
         return local50_0.readByte();
     }
 
-    private static String readNamedTagName(DataInput local51_0, NbtAccounter local51_1) throws IOException {
+    private static String readNamedTagName(DataInput local51_0, SizeFence local51_1) throws IOException {
         return local51_0.readUTF();
     }
 
     private static Tag readNamedTagData(TagType<?> local52_0, String local52_1, DataInput local52_2, int local52_3,
-                                        NbtAccounter local52_4) {
+                                        SizeFence local52_4) {
         try {
             return local52_0.load(local52_2, local52_3, local52_4);
         } catch (IOException var8) {
