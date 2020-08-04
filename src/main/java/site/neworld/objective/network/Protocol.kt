@@ -1,14 +1,13 @@
 package site.neworld.objective.network
 
 import io.netty.buffer.ByteBuf
+import io.netty.buffer.Unpooled
+import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.handler.codec.ByteToMessageDecoder
 import io.netty.handler.codec.EncoderException
 import io.netty.handler.codec.MessageToByteEncoder
-
-data class InboundFrame(val operation: InboundOperation, val data: ByteBuf)
-
-enum class InboundOperation { READ, WRITE }
 
 class VarInt32LengthFieldBasedFrameDecoder : ByteToMessageDecoder() {
     override fun decode(ctx: ChannelHandlerContext, buf: ByteBuf, out: MutableList<Any>) {
@@ -24,5 +23,24 @@ class VarInt32LengthFieldBasedFrameEncoder : MessageToByteEncoder<ByteBuf>() {
         if (payloadLength == 0) throw EncoderException("void frame")
         buf.writeVarInt(payloadLength)
         buf.writeBytes(frame)
+    }
+}
+
+class FrameHandler: SimpleChannelInboundHandler<ByteBuf>(), IPacketSender {
+    private var channel: Channel? = null
+
+    override fun channelActive(ctx: ChannelHandlerContext) {
+        super.channelActive(ctx)
+        this.channel = ctx.channel()
+    }
+
+    override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
+        PacketHost.processFrame(msg, this)
+    }
+
+    override fun send(packet: IPacket) {
+        val buf = Unpooled.buffer()
+        PacketHost.constructFrame(packet, buf)
+        channel?.writeAndFlush(buf)
     }
 }

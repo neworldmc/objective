@@ -31,7 +31,8 @@ fun runServer(host: InetAddress?, port: Int) {
 
 object ObjectiveServerChannelInitializer : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
-        ch.pipeline().addLast(VarInt32LengthFieldBasedFrameDecoder(), VarInt32LengthFieldBasedFrameEncoder())
-        TODO("need channel handler")
+        ch.pipeline()
+                .addLast(VarInt32LengthFieldBasedFrameDecoder(), VarInt32LengthFieldBasedFrameEncoder())
+                .addLast(FrameHandler())
     }
 }

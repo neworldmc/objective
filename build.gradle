@@ -7,6 +7,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
 }
 
 group 'site.neworld'

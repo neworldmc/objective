@@ -30,19 +30,15 @@ import java.util.concurrent.Executors
 class LevelContext(private val level: Region) {
     private val asyncComputeContext = Executors.newWorkStealingPool().asCoroutineDispatcher()
 
-    fun requestRead(data: ByteBuf) = runBlocking {
-        launch(asyncComputeContext) {
-            level.read(parseReadPacket(data))
-        }
+    suspend fun requestRead(pos: ChunkPos): CompoundTag? {
+        var result: CompoundTag? = null
+        GlobalScope.launch(asyncComputeContext) { result = level.read(pos) }.join()
+        return result
     }
 
-    private fun parseReadPacket(data: ByteBuf): ChunkPos {
-        TODO("Not yet implemented")
-    }
-
-    fun requestWrite(data: ByteBuf) = runBlocking {
-        launch(asyncComputeContext) {
+    suspend fun requestWrite(data: ByteBuf) {
+        GlobalScope.launch(asyncComputeContext) {
             //level.write(parseWritePacket(data))
-        }
+        }.join()
     }
 }
