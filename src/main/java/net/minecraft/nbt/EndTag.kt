@@ -5,29 +5,20 @@ import java.io.DataOutput
 
 class EndTag private constructor() : Tag {
     override fun write(output: DataOutput) {}
-
-    override fun getId(): Byte = 0
-
-    override fun getType() = TYPE
-
+    override val id get() = 0.toByte()
+    override val type get() = TYPE
     override fun toString() = "END"
-
     override fun copy() = this
 
     companion object {
         @JvmField
-        val TYPE = object : TagType<EndTag> {
+        val TYPE = object : AValueTagType<EndTag>("END", "TAG_End") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): EndTag {
                 fence.accountBits(64L)
                 return INSTANCE
             }
-
-            override fun getName() = "END"
-
-            override fun getPrettyName() = "TAG_End"
-
-            override fun isValue() = true
         }
+
         @JvmField
         val INSTANCE = EndTag()
     }

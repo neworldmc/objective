@@ -5,36 +5,23 @@ import java.io.DataOutput
 
 class StringTag private constructor(private val data: String) : Tag {
     override fun write(output: DataOutput) = output.writeUTF(data)
-
-    override fun getId(): Byte = 8
-
-    override fun getType() = TYPE
-
+    override val id get() = 8.toByte()
+    override val type get() = TYPE
     override fun toString() = quoteAndEscape(data)
-
     override fun copy() = this
-
     override fun equals(other: Any?) = if (this === other) true else other is StringTag && data == other.data
-
     override fun hashCode() = data.hashCode()
-
-    override fun getAsString() = data
+    override val asString get() = data
 
     companion object {
         @JvmField
-        val TYPE = object : TagType<StringTag> {
+        val TYPE = object : AValueTagType<StringTag>("STRING", "TAG_String") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): StringTag {
                 fence.accountBits(288L)
-                val local1_4 = input.readUTF()
-                fence.accountBits(16 * local1_4.length.toLong())
-                return valueOf(local1_4)
+                val string = input.readUTF()
+                fence.accountBits(16 * string.length.toLong())
+                return valueOf(string)
             }
-
-            override fun getName() = "STRING"
-
-            override fun getPrettyName() = "TAG_String"
-
-            override fun isValue() = true
         }
 
         private val EMPTY = StringTag("")

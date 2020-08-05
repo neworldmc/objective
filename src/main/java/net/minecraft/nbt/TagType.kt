@@ -1,24 +1,32 @@
 package net.minecraft.nbt
 
 import java.io.DataInput
-import java.io.IOException
+import java.io.DataOutput
 
-interface TagType<T : Tag?> {
-    @Throws(IOException::class)
-    fun load(input: DataInput, depth: Int, fence: SizeFence): T
-    fun isValue() = false
-    fun getName(): String
-    fun getPrettyName(): String
+interface Tag {
+    fun write(output: DataOutput)
+    val id: Byte
+    val type: TagType<*>
+    fun copy(): Tag
+    val asString get() = this.toString()
 }
 
-private fun createInvalid(id: Int): TagType<EndTag> {
-    return object : TagType<EndTag> {
-        override fun load(input: DataInput, depth: Int, fence: SizeFence): EndTag {
-            throw IllegalArgumentException("Invalid tag id: $id")
-        }
+interface TagType<T : Tag> {
+    fun load(input: DataInput, depth: Int, fence: SizeFence): T
+    fun isValue() = false
+    val name: String
+    val prettyName: String
+}
 
-        override fun getName() = "INVALID[$id]"
-        override fun getPrettyName() = "UNKNOWN_$id"
+abstract class ATagType<T : Tag>(final override val name: String, final override val prettyName: String) : TagType<T>
+
+abstract class AValueTagType<T : Tag>(final override val name: String, final override val prettyName: String) : TagType<T> {
+    final override fun isValue() = true
+}
+
+private fun createInvalid(id: Int) = object : ATagType<EndTag>("INVALID[$id]", "UNKNOWN_$id") {
+    override fun load(input: DataInput, depth: Int, fence: SizeFence): EndTag {
+        throw IllegalArgumentException("Invalid tag id: $id")
     }
 }
 
