@@ -1,7 +1,5 @@
 package net.minecraft.nbt
 
-import com.google.common.collect.Lists
-import com.google.common.collect.Maps
 import net.minecraft.nbt.ByteTag.Companion.valueOf
 import net.minecraft.nbt.DoubleTag.Companion.valueOf
 import net.minecraft.nbt.FloatTag.Companion.valueOf
@@ -32,7 +30,7 @@ class CompoundTag private constructor(private val tags: MutableMap<String, Tag>)
     override val type get() = TYPE
     fun size(): Int = tags.size
     val isEmpty = tags.isEmpty()
-    override fun copy() = CompoundTag(Maps.newHashMap(Maps.transformValues(tags) { obj: Tag? -> obj!!.copy() }))
+    override fun copy() = CompoundTag(tags.mapValues {(_, v) -> v.copy() }.toMutableMap())
     override fun equals(other: Any?) = if (this === other) true else other is CompoundTag && tags == other.tags
     override fun hashCode() = tags.hashCode()
     fun put(name: String, value: Tag): Tag = tags.put(name, value)!!
@@ -102,7 +100,7 @@ class CompoundTag private constructor(private val tags: MutableMap<String, Tag>)
         val builder = StringBuilder("{")
         var keys: Collection<String> = tags.keys
         if (LOGGER.isDebugEnabled) {
-            val keyList = Lists.newArrayList(tags.keys)
+            val keyList = tags.keys.toMutableList()
             keyList.sort()
             keys = keyList
         }

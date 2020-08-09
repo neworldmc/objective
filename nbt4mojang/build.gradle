@@ -1,0 +1,27 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    // mojang nbt implementation uses these
+    implementation 'org.apache.logging.log4j:log4j-api:2.13.0'
+    implementation 'org.apache.commons:commons-lang3:3.9'
+}
+
+sourceSets {
+    main {
+        java { srcDirs = ['module']}
+    }
+}
+
+compileJava {
+    sourceCompatibility '11'
+    targetCompatibility '11'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
+

@@ -1,6 +1,5 @@
 package net.minecraft.nbt
 
-import it.unimi.dsi.fastutil.longs.LongSet
 import org.apache.commons.lang3.ArrayUtils
 import java.io.DataInput
 import java.io.DataOutput
@@ -162,7 +161,7 @@ class IntArrayTag(private var data: IntArray) : CollectionTag<IntTag>() {
 }
 
 class LongArrayTag(private var data: LongArray) : CollectionTag<LongTag>() {
-    constructor(set: LongSet) : this(set.toLongArray())
+    constructor(set: Set<Long>) : this(set.toLongArray())
 
     constructor(list: List<Long>) : this(toArray(list))
 

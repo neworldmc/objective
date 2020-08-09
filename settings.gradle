@@ -8,3 +8,5 @@
  */
 
 rootProject.name = 'objective'
+include 'nbt4mojang'
+include 'server'

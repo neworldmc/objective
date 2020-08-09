@@ -33,7 +33,7 @@ object NbtIo {
         val type = input.readByte().toInt()
         if (type == 0) return EndTag.INSTANCE
         input.readUTF()
-        return getType(type).load(input, 0, fence)!!
+        return getType(type).load(input, 0, fence)
     }
 }
 
