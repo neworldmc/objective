@@ -1,6 +1,6 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
-import net.minecraft.nbt.TagTypes.getType
+import site.neworld.objective.utils.nbt.TagTypes.getType
 import java.io.*
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream

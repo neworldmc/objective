@@ -1,4 +1,4 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
 import java.io.DataInput
 import java.io.DataOutput
@@ -11,7 +11,6 @@ class EndTag private constructor() : Tag {
     override fun copy() = this
 
     companion object {
-        @JvmField
         val TYPE = object : AValueTagType<EndTag>("END", "TAG_End") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): EndTag {
                 fence.accountBits(64L)
@@ -19,7 +18,6 @@ class EndTag private constructor() : Tag {
             }
         }
 
-        @JvmField
         val INSTANCE = EndTag()
     }
 }

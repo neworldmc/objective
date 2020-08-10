@@ -1,8 +1,8 @@
 package site.neworld.objective.network
 
 import io.netty.buffer.ByteBuf
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.NbtIo
+import site.neworld.objective.utils.nbt.CompoundTag
+import site.neworld.objective.utils.nbt.NbtIo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -45,65 +45,25 @@ fun ByteBuf.readVarInt(): Int {
     throw RuntimeException("VarInt too big")
 }
 
-fun ByteBuf.writeVarInt(value: Int) {
+fun ByteBuf.writeVarInt(value: Int): ByteBuf {
     var operate = value
     while (operate and -128 != 0) {
         writeByte(operate and 127 or 128)
         operate = operate ushr 7
     }
-    writeByte(operate)
+    return writeByte(operate)
 }
 
-fun ByteBuf.readByteArray(): ByteArray {
-    val result = ByteArray(readVarInt())
-    readBytes(result)
-    return result
-}
-
-fun ByteBuf.writeByteArray(arr: ByteArray) {
-    writeVarInt(arr.size)
-    writeBytes(arr)
-}
-
-fun ByteBuf.readShortArray(): ShortArray {
-    val length = readVarInt()
-    return ShortArray(length) { readShort() }
-}
-
-fun ByteBuf.writeIntArray(arr: ShortArray) {
-    writeVarInt(arr.size)
-    for (i in arr) writeShort(i.toInt())
-}
-
-fun ByteBuf.readIntArray(): IntArray {
-    val length = readVarInt()
-    return IntArray(length) { readInt() }
-}
-
-fun ByteBuf.writeIntArray(arr: IntArray) {
-    writeVarInt(arr.size)
-    for (i in arr) writeInt(i)
-}
-
-fun ByteBuf.readLongArray(): LongArray {
-    val length = readVarInt()
-    return LongArray(length) { readLong() }
-}
-
-fun ByteBuf.writeLongArray(arr: LongArray) {
-    writeVarInt(arr.size)
-    for (i in arr) writeLong(i)
-}
-
-fun ByteBuf.readString(): String {
-    val length = readVarInt()
-    return readCharSequence(length, StandardCharsets.UTF_8).toString()
-}
-
-fun ByteBuf.writeString(str: String) {
-    writeVarInt(str.length)
-    writeCharSequence(str, StandardCharsets.UTF_8)
-}
+fun ByteBuf.readByteArray() = ByteArray(readVarInt()).apply { readBytes(this) }
+fun ByteBuf.readShortArray() = ShortArray(readVarInt()) { readShort() }
+fun ByteBuf.readIntArray() = IntArray(readVarInt()) { readInt() }
+fun ByteBuf.readLongArray() = LongArray(readVarInt()) { readLong() }
+fun ByteBuf.readString() = readCharSequence(readVarInt(), StandardCharsets.UTF_8).toString()
+fun ByteBuf.writeByteArray(arr: ByteArray) = writeVarInt(arr.size).writeBytes(arr)!!
+fun ByteBuf.writeIntArray(arr: ShortArray) = writeVarInt(arr.size).apply { for (i in arr) writeShort(i.toInt()) }
+fun ByteBuf.writeIntArray(arr: IntArray) = writeVarInt(arr.size).apply { for (i in arr) writeInt(i) }
+fun ByteBuf.writeLongArray(arr: LongArray) = writeVarInt(arr.size).apply { for (i in arr) writeLong(i) }
+fun ByteBuf.writeString(str: String) = writeVarInt(str.length).apply { writeCharSequence(str, StandardCharsets.UTF_8) }
 
 // just to make lives a little easier, we do record the length of the data
 fun ByteBuf.writeNbt(tag: CompoundTag) {
@@ -112,6 +72,4 @@ fun ByteBuf.writeNbt(tag: CompoundTag) {
     writeByteArray(outputStream.toByteArray())
 }
 
-fun ByteBuf.readNbt(): CompoundTag {
-    return DataInputStream(ByteArrayInputStream(readByteArray())).use { NbtIo.read(it) }
-}
+fun ByteBuf.readNbt() = DataInputStream(ByteArrayInputStream(readByteArray())).use { NbtIo.read(it) }

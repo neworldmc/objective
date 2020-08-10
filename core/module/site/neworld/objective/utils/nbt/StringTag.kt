@@ -1,4 +1,4 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
 import java.io.DataInput
 import java.io.DataOutput
@@ -14,7 +14,6 @@ class StringTag private constructor(private val data: String) : Tag {
     override val asString get() = data
 
     companion object {
-        @JvmField
         val TYPE = object : AValueTagType<StringTag>("STRING", "TAG_String") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): StringTag {
                 fence.accountBits(288L)
@@ -26,10 +25,8 @@ class StringTag private constructor(private val data: String) : Tag {
 
         private val EMPTY = StringTag("")
 
-        @JvmStatic
         fun valueOf(local1_0: String) = if (local1_0.isEmpty()) EMPTY else StringTag(local1_0)
 
-        @JvmStatic
         fun quoteAndEscape(string: String): String {
             val builder = StringBuilder(" ")
             var quote = 0.toChar()

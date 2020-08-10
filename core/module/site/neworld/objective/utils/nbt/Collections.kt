@@ -1,9 +1,8 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
 import org.apache.commons.lang3.ArrayUtils
 import java.io.DataInput
 import java.io.DataOutput
-import java.io.IOException
 import java.util.*
 
 abstract class CollectionTag<T : Tag?> : AbstractList<T>(), Tag {
@@ -21,7 +20,6 @@ private inline fun typeCheck(tag: Tag, fn: (NumericTag) -> Unit): Boolean {
 class ByteArrayTag(private var data: ByteArray) : CollectionTag<ByteTag>() {
     constructor(list: List<Byte>) : this(toArray(list))
 
-    @Throws(IOException::class)
     override fun write(output: DataOutput) {
         output.writeInt(data.size)
         output.write(data)
@@ -75,7 +73,6 @@ class ByteArrayTag(private var data: ByteArray) : CollectionTag<ByteTag>() {
 
     companion object {
         val TYPE = object : ATagType<ByteArrayTag>("BYTE[]", "TAG_Byte_Array") {
-            @Throws(IOException::class)
             override fun load(input: DataInput, depth: Int, fence: SizeFence): ByteArrayTag {
                 fence.accountBits(192L)
                 fence.accountBits(8L * input.readInt().toLong())
@@ -92,7 +89,6 @@ class ByteArrayTag(private var data: ByteArray) : CollectionTag<ByteTag>() {
 class IntArrayTag(private var data: IntArray) : CollectionTag<IntTag>() {
     constructor(list: List<Int>) : this(toArray(list))
 
-    @Throws(IOException::class)
     override fun write(output: DataOutput) {
         output.writeInt(data.size)
         for (int in data) output.writeInt(int)
@@ -146,7 +142,6 @@ class IntArrayTag(private var data: IntArray) : CollectionTag<IntTag>() {
 
     companion object {
         val TYPE = object : ATagType<IntArrayTag>("INT[]", "TAG_Int_Array") {
-            @Throws(IOException::class)
             override fun load(input: DataInput, depth: Int, fence: SizeFence): IntArrayTag {
                 fence.accountBits(192L)
                 val size = input.readInt()
@@ -165,7 +160,6 @@ class LongArrayTag(private var data: LongArray) : CollectionTag<LongTag>() {
 
     constructor(list: List<Long>) : this(toArray(list))
 
-    @Throws(IOException::class)
     override fun write(output: DataOutput) {
         output.writeInt(data.size)
         for (local4_2 in data) output.writeLong(local4_2)
@@ -219,7 +213,6 @@ class LongArrayTag(private var data: LongArray) : CollectionTag<LongTag>() {
 
     companion object {
         val TYPE = object : ATagType<LongArrayTag>("LONG[]", "TAG_Long_Array") {
-            @Throws(IOException::class)
             override fun load(input: DataInput, depth: Int, fence: SizeFence): LongArrayTag {
                 fence.accountBits(192L)
                 val size = input.readInt()
@@ -235,7 +228,6 @@ class LongArrayTag(private var data: LongArray) : CollectionTag<LongTag>() {
 class ListTag private constructor(private val list: MutableList<Tag>, private var typeId: Byte) : CollectionTag<Tag>() {
     constructor() : this(mutableListOf<Tag>(), 0.toByte())
 
-    @Throws(IOException::class)
     override fun write(output: DataOutput) {
         typeId = (if (list.isEmpty()) 0 else list[0].id)
         output.writeByte(typeId.toInt())
@@ -355,7 +347,6 @@ class ListTag private constructor(private val list: MutableList<Tag>, private va
 
     companion object {
         val TYPE = object : ATagType<ListTag>("LIST", "TAG_List") {
-            @Throws(IOException::class)
             override fun load(input: DataInput, depth: Int, fence: SizeFence): ListTag {
                 fence.accountBits(296L)
                 if (depth > 512) throw RuntimeException("Tried to read NBT tag with too high complexity, depth > 512")

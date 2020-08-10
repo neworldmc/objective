@@ -1,4 +1,4 @@
-package site.neworld.objective.io
+package site.neworld.objective.data
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import kotlinx.coroutines.GlobalScope
@@ -17,7 +17,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
-private inline class SectorBitmap(private val used: BitSet = BitSet()) {
+internal inline class SectorBitmap(private val used: BitSet = BitSet()) {
     fun force(pos: Int, size: Int) = used.set(pos, pos + size)
 
     fun free(pos: Int, size: Int) = used.clear(pos, pos + size)
@@ -53,7 +53,7 @@ private fun packSectorAlloc(start: Int, count: Int) = (start shl 8) or count
 
 private fun sizeToSectors(size: Int) = (size - 1) / 4096 + 1
 
-class FixedFATFile private constructor(file: Path) {
+class SectorFile private constructor(file: Path) {
     private val file = AsynchronousFileChannel.open(
             file,
             StandardOpenOption.CREATE,
@@ -168,8 +168,8 @@ class FixedFATFile private constructor(file: Path) {
         private val PADDING_BUFFER = ByteBuffer.allocateDirect(1)
         private val HEADER_WRITER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
-        suspend fun open(file: Path): FixedFATFile {
-            val result = FixedFATFile(file)
+        suspend fun open(file: Path): SectorFile {
+            val result = SectorFile(file)
             result.asyncInit()
             return result
         }

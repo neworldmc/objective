@@ -3,8 +3,8 @@ package site.neworld.objective.network
 import io.netty.buffer.ByteBuf
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import net.minecraft.core.ChunkPos
-import net.minecraft.nbt.CompoundTag
+import site.neworld.objective.utils.ChunkPos
+import site.neworld.objective.utils.nbt.CompoundTag
 import java.time.Instant
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createInstance
@@ -62,8 +62,7 @@ private class ServiceSetId : IPacket {
     var id: Int = 0
 
     override fun encode(buf: ByteBuf) {
-        buf.writeString(name)
-        buf.writeInt(id)
+        buf.writeString(name).writeInt(id)
     }
 
     override fun decode(buf: ByteBuf) {
@@ -77,9 +76,7 @@ private class FullChunkRequest : IPacket {
     var tag: Int = 0
 
     override fun encode(buf: ByteBuf) {
-        buf.writeInt(pos.x)
-        buf.writeInt(pos.z)
-        buf.writeInt(tag)
+        buf.writeInt(pos.x).writeInt(pos.z).writeInt(tag)
     }
 
     override fun decode(buf: ByteBuf) {
@@ -107,8 +104,7 @@ private class ChunkData : IPacket {
     var nbt: CompoundTag? = null
 
     override fun encode(buf: ByteBuf) {
-        buf.writeInt(tag)
-        buf.writeNbt(nbt!!)
+        buf.writeInt(tag).writeNbt(nbt!!)
     }
 
     override fun decode(buf: ByteBuf) {

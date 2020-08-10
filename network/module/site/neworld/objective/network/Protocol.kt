@@ -21,8 +21,7 @@ class VarInt32LengthFieldBasedFrameEncoder : MessageToByteEncoder<ByteBuf>() {
     override fun encode(ctx: ChannelHandlerContext, frame: ByteBuf, buf: ByteBuf) {
         val payloadLength = frame.readableBytes()
         if (payloadLength == 0) throw EncoderException("void frame")
-        buf.writeVarInt(payloadLength)
-        buf.writeBytes(frame)
+        buf.writeVarInt(payloadLength).writeBytes(frame)
     }
 }
 
@@ -34,9 +33,7 @@ class FrameHandler: SimpleChannelInboundHandler<ByteBuf>(), IPacketSender {
         this.channel = ctx.channel()
     }
 
-    override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) {
-        PacketHost.processFrame(msg, this)
-    }
+    override fun channelRead0(ctx: ChannelHandlerContext, msg: ByteBuf) = PacketHost.processFrame(msg, this)
 
     override fun send(packet: IPacket) {
         val buf = Unpooled.buffer()

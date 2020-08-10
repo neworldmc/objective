@@ -1,4 +1,4 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
 import java.io.DataInput
 import java.io.DataOutput
@@ -30,7 +30,6 @@ class ByteTag private constructor(override val asByte: Byte) : NumericTag() {
     override val asNumber: Number get() = asByte
 
     companion object {
-        @JvmField
         val TYPE = object : AValueTagType<ByteTag>("BYTE", "TAG_Byte") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): ByteTag {
                 fence.accountBits(72L)
@@ -42,11 +41,9 @@ class ByteTag private constructor(override val asByte: Byte) : NumericTag() {
         private val ONE = valueOf(1.toByte())
         private val cache = Array(256) { ByteTag((it - 128).toByte()) }
 
-        @JvmStatic
-        fun valueOf(local1_0: Byte) = cache[128 + local1_0]
+        fun valueOf(byte: Byte) = cache[128 + byte]
 
-        @JvmStatic
-        fun valueOf(local2_0: Boolean) = if (local2_0) ONE else ZERO
+        fun valueOf(bool: Boolean) = if (bool) ONE else ZERO
     }
 }
 
@@ -67,7 +64,6 @@ class ShortTag private constructor(private val data: Short) : NumericTag() {
     override val asNumber get() = data
 
     companion object {
-        @JvmField
         val TYPE = object : AValueTagType<ShortTag>("SHORT", "TAG_Short") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): ShortTag {
                 fence.accountBits(80L)
@@ -77,7 +73,6 @@ class ShortTag private constructor(private val data: Short) : NumericTag() {
 
         private val cache = Array(1153) { ShortTag((-128 + it).toShort()) }
 
-        @JvmStatic
         fun valueOf(short: Short) = if (short >= -128 && short <= 1024) cache[short + 128] else ShortTag(short)
     }
 }
@@ -99,7 +94,6 @@ class IntTag private constructor(private val data: Int) : NumericTag() {
     override val asNumber get() = data
 
     companion object {
-        @JvmField
         val TYPE = object : AValueTagType<IntTag>("INT", "TAG_Int") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): IntTag {
                 fence.accountBits(96L)
@@ -109,10 +103,7 @@ class IntTag private constructor(private val data: Int) : NumericTag() {
 
         private val cache = Array(1153) { IntTag(-128 + it) }
 
-        @JvmStatic
-        fun valueOf(int: Int): IntTag {
-            return if (int >= -128 && int <= 1024) cache[int + 128] else IntTag(int)
-        }
+        fun valueOf(int: Int) = if (int >= -128 && int <= 1024) cache[int + 128] else IntTag(int)
     }
 }
 
@@ -133,7 +124,6 @@ class LongTag private constructor(private val data: Long) : NumericTag() {
     override val asNumber get() = data
 
     companion object {
-        @JvmField
         val TYPE = object : AValueTagType<LongTag>("LONG", "TAG_Long") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): LongTag {
                 fence.accountBits(128L)
@@ -143,7 +133,6 @@ class LongTag private constructor(private val data: Long) : NumericTag() {
 
         private val cache = Array(1153) { LongTag((-128 + it).toLong()) }
 
-        @JvmStatic
         fun valueOf(long: Long) = if (long >= -128L && long <= 1024L) cache[long.toInt() + 128] else LongTag(long)
     }
 }
@@ -165,10 +154,8 @@ class FloatTag private constructor(private val data: Float) : NumericTag() {
     override val asNumber get() = data
 
     companion object {
-        @JvmField
         val ZERO = FloatTag(0.0f)
 
-        @JvmField
         val TYPE = object : AValueTagType<FloatTag>("FLOAT", "TAG_Float") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): FloatTag {
                 fence.accountBits(96L)
@@ -176,8 +163,7 @@ class FloatTag private constructor(private val data: Float) : NumericTag() {
             }
         }
 
-        @JvmStatic
-        fun valueOf(local1_0: Float): FloatTag = if (local1_0 == 0.0f) ZERO else FloatTag(local1_0)
+        fun valueOf(value: Float): FloatTag = if (value == 0.0f) ZERO else FloatTag(value)
     }
 }
 
@@ -202,10 +188,8 @@ class DoubleTag private constructor(private val data: Double) : NumericTag() {
     override val asNumber get() = data
 
     companion object {
-        @JvmField
         val ZERO = DoubleTag(0.0)
 
-        @JvmField
         val TYPE = object : AValueTagType<DoubleTag>("DOUBLE", "TAG_Double") {
             override fun load(input: DataInput, depth: Int, fence: SizeFence): DoubleTag {
                 fence.accountBits(128L)
@@ -213,8 +197,7 @@ class DoubleTag private constructor(private val data: Double) : NumericTag() {
             }
         }
 
-        @JvmStatic
-        fun valueOf(local1_0: Double) = if (local1_0 == 0.0) ZERO else DoubleTag(local1_0)
+        fun valueOf(value: Double) = if (value == 0.0) ZERO else DoubleTag(value)
     }
 
 }

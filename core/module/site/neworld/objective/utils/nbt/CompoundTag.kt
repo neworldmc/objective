@@ -1,25 +1,15 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
-import net.minecraft.nbt.ByteTag.Companion.valueOf
-import net.minecraft.nbt.DoubleTag.Companion.valueOf
-import net.minecraft.nbt.FloatTag.Companion.valueOf
-import net.minecraft.nbt.IntTag.Companion.valueOf
-import net.minecraft.nbt.LongTag.Companion.valueOf
-import net.minecraft.nbt.ShortTag.Companion.valueOf
-import net.minecraft.nbt.StringTag.Companion.quoteAndEscape
-import net.minecraft.nbt.StringTag.Companion.valueOf
-import net.minecraft.nbt.TagTypes.getType
 import org.apache.logging.log4j.LogManager
+import site.neworld.objective.utils.nbt.TagTypes.getType
 import java.io.DataInput
 import java.io.DataOutput
-import java.io.IOException
 import java.util.*
 import java.util.regex.Pattern
 
 class CompoundTag private constructor(private val tags: MutableMap<String, Tag>) : Tag {
     constructor() : this(HashMap<String, Tag>())
 
-    @Throws(IOException::class)
     override fun write(output: DataOutput) {
         for (key in tags.keys) writeNamedTag(key, tags[key]!!, output)
         output.writeByte(0)
@@ -34,19 +24,19 @@ class CompoundTag private constructor(private val tags: MutableMap<String, Tag>)
     override fun equals(other: Any?) = if (this === other) true else other is CompoundTag && tags == other.tags
     override fun hashCode() = tags.hashCode()
     fun put(name: String, value: Tag): Tag = tags.put(name, value)!!
-    fun putByte(name: String, value: Byte) = tags.set(name, valueOf(value))
-    fun putShort(name: String, value: Short) = tags.set(name, valueOf(value))
-    fun putInt(name: String, value: Int) = tags.set(name, valueOf(value))
-    fun putLong(name: String, value: Long) = tags.set(name, valueOf(value))
-    fun putFloat(name: String, value: Float) = tags.set(name, valueOf(value))
-    fun putDouble(name: String, value: Double) = tags.set(name, valueOf(value))
-    fun putString(name: String, value: String) = tags.set(name, valueOf(value))
+    fun putByte(name: String, value: Byte) = tags.set(name, ByteTag.valueOf(value))
+    fun putShort(name: String, value: Short) = tags.set(name, ShortTag.valueOf(value))
+    fun putInt(name: String, value: Int) = tags.set(name, IntTag.valueOf(value))
+    fun putLong(name: String, value: Long) = tags.set(name, LongTag.valueOf(value))
+    fun putFloat(name: String, value: Float) = tags.set(name, FloatTag.valueOf(value))
+    fun putDouble(name: String, value: Double) = tags.set(name, DoubleTag.valueOf(value))
+    fun putString(name: String, value: String) = tags.set(name, StringTag.valueOf(value))
     fun putByteArray(name: String, value: ByteArray) = tags.set(name, ByteArrayTag(value))
     fun putIntArray(name: String, value: IntArray) = tags.set(name, IntArrayTag(value))
     fun putIntArray(name: String, value: List<Int>) = tags.set(name, IntArrayTag(value))
     fun putLongArray(name: String, value: LongArray) = tags.set(name, LongArrayTag(value))
     fun putLongArray(name: String, value: List<Long>) = tags.set(name, LongArrayTag(value))
-    fun putBoolean(name: String, value: Boolean) = tags.set(name, valueOf(value))
+    fun putBoolean(name: String, value: Boolean) = tags.set(name, ByteTag.valueOf(value))
     fun getByte(name: String) = if (contains(name, 99)) (tags[name] as NumericTag).asByte else 0
     fun getShort(name: String) = if (contains(name, 99)) (tags[name] as NumericTag).asShort else 0
     fun getInt(name: String) = if (contains(name, 99)) (tags[name] as NumericTag).asInt else 0
@@ -123,7 +113,6 @@ class CompoundTag private constructor(private val tags: MutableMap<String, Tag>)
     companion object {
         private val LOGGER = LogManager.getLogger()
         val TYPE = object : ATagType<CompoundTag>("COMPOUND", "TAG_Compound") {
-            @Throws(IOException::class)
             override fun load(input: DataInput, depth: Int, fence: SizeFence): CompoundTag {
                 fence.accountBits(384L)
                 if (depth > 512) throw RuntimeException("Tried to read NBT tag with too high complexity, depth > 512")
@@ -155,5 +144,5 @@ private fun readNamedTagType(input: DataInput) = input.readByte()
 private fun readNamedTagName(input: DataInput) = input.readUTF()
 
 private fun handleEscape(local54_0: String): String {
-    return if (SIMPLE_VALUE.matcher(local54_0).matches()) local54_0 else quoteAndEscape(local54_0)
+    return if (SIMPLE_VALUE.matcher(local54_0).matches()) local54_0 else StringTag.quoteAndEscape(local54_0)
 }

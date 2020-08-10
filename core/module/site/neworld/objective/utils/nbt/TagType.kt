@@ -1,4 +1,4 @@
-package net.minecraft.nbt
+package site.neworld.objective.utils.nbt
 
 import java.io.DataInput
 import java.io.DataOutput
