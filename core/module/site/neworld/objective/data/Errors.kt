@@ -33,17 +33,6 @@ interface IErrorRecorder {
     fun accept(binId: Int, category: ErrorCategory, pos: ChunkPos, vararg meta: Number)
 }
 
-class ConsoleErrorRecorder : IErrorRecorder {
-    private val exec = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    override fun accept(binId: Int, category: ErrorCategory, pos: ChunkPos, vararg meta: Number) {
-        GlobalScope.launch(exec) {
-            print("[${LocalDateTime.now()}][$binId][${category.name}]{${pos.toLong()}")
-            for (i in meta) print(i)
-            println()
-        }
-    }
-}
-
 private object ErrorRecorderGetter: KoinComponent {
     val recorder: IErrorRecorder by inject()
 }
@@ -75,5 +64,16 @@ enum class Error(private val binId: Int, private val category: ErrorCategory) {
     fun raise(pos: ChunkPos, vararg meta: Number): Nothing {
         ErrorRecorderGetter.recorder.accept(binId, category, pos, *meta)
         throw AnvilDbException(this, pos)
+    }
+}
+
+class ConsoleErrorRecorder : IErrorRecorder {
+    private val exec = Concurrency.newSynchronizedCoroutineContext()
+    override fun accept(binId: Int, category: ErrorCategory, pos: ChunkPos, vararg meta: Number) {
+        GlobalScope.launch(exec) {
+            print("[${LocalDateTime.now()}][$binId][${category.name}]{${pos.toLong()}")
+            for (i in meta) print(i)
+            println()
+        }
     }
 }

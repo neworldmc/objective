@@ -2,7 +2,6 @@ package site.neworld.objective.data
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import site.neworld.objective.utils.ChunkPos
 import site.neworld.objective.utils.ExceptionAggregator
@@ -15,7 +14,6 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.Executors
 
 private inline class SectorBitmap(private val used: BitSet = BitSet()) {
     fun force(pos: Int, size: Int) = used.set(pos, pos + size)
@@ -164,7 +162,7 @@ class SectorFile private constructor(file: Path) {
 
     companion object {
         private val PADDING_BUFFER = ByteBuffer.allocateDirect(1)
-        private val HEADER_WRITER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+        private val HEADER_WRITER = Concurrency.newSynchronizedCoroutineContext()
 
         suspend fun open(file: Path): SectorFile {
             val result = SectorFile(file)
