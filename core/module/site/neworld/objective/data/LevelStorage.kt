@@ -8,21 +8,21 @@ import site.neworld.objective.utils.ExceptionAggregator
 import java.io.File
 import java.util.concurrent.Executors
 
-class Level(private val folder: File) : AutoCloseable, IBinaryAnvilEntryProvider {
-    private val regionCache = Long2ObjectLinkedOpenHashMap<Region>()
-    private val oversized = LargeEntryStorage(folder.toPath())
+class LevelStorage(private val folder: File) : AutoCloseable, IBinaryAnvilEntryProvider {
+    private val regionCache = Long2ObjectLinkedOpenHashMap<RegionStorage>()
+    private val oversized = OversizeStorage(folder.toPath())
 
     init {
         if (!folder.exists()) folder.mkdirs()
     }
 
-    private suspend fun getRegionFile(pos: ChunkPos): Region {
+    private suspend fun getRegionFile(pos: ChunkPos): RegionStorage {
         val regionKey = pos.toLong()
         val cacheRegion = regionCache.getAndMoveToFirst(regionKey)
         if (cacheRegion != null) return cacheRegion
         if (regionCache.size >= 256) regionCache.removeLast().close()
         val mcaFile = SectorFile.open(File(folder, "r.${pos.regionX}.${pos.regionZ}.mca").toPath())
-        val loadedRegion = Region(mcaFile, oversized)
+        val loadedRegion = RegionStorage(mcaFile, oversized)
         regionCache.putAndMoveToFirst(regionKey, loadedRegion)
         return loadedRegion
     }
@@ -31,11 +31,7 @@ class Level(private val folder: File) : AutoCloseable, IBinaryAnvilEntryProvider
 
     override suspend fun set(pos: ChunkPos, bytes: ByteArray) = getRegionFile(pos).write(pos, bytes)
 
-    override fun close() {
-        val aggregator = ExceptionAggregator()
-        for (regionFile in regionCache.values) aggregator.runCaptured { regionFile.close() }
-        aggregator.complete()
-    }
+    override fun close() = ExceptionAggregator().run { for (v in regionCache.values) runCaptured { v.close() } }
 
     companion object {
         private val asyncComputeContext = Executors.newWorkStealingPool().asCoroutineDispatcher()

@@ -11,6 +11,7 @@ class ChunkPos(val x: Int, val z: Int) {
     override fun hashCode() = (1664525 * x + 1013904223) xor (1664525 * (z xor -559038737) + 1013904223)
 
     companion object {
+        val ZERO = ChunkPos(0,0)
         val INVALID_CHUNK_POS = asLong(1875016, 1875016)
         fun asLong(x: Int, z: Int) = x.toLong() and 4294967295L or (z.toLong() and 4294967295L) shl 32
     }

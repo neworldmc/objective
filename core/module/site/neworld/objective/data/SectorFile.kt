@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
-import org.apache.logging.log4j.LogManager
+import site.neworld.objective.utils.ChunkPos
 import site.neworld.objective.utils.ExceptionAggregator
 import site.neworld.objective.utils.aRead
 import site.neworld.objective.utils.aWrite
@@ -17,7 +17,7 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.Executors
 
-internal inline class SectorBitmap(private val used: BitSet = BitSet()) {
+private inline class SectorBitmap(private val used: BitSet = BitSet()) {
     fun force(pos: Int, size: Int) = used.set(pos, pos + size)
 
     fun free(pos: Int, size: Int) = used.clear(pos, pos + size)
@@ -51,7 +51,7 @@ private fun getSectorNumber(packed: Int) = packed shr 8
 
 private fun packSectorAlloc(start: Int, count: Int) = (start shl 8) or count
 
-private fun sizeToSectors(size: Int) = (size - 1) / 4096 + 1
+private fun computeSectors(size: Int) = (size - 1) / 4096 + 1
 
 class SectorFile private constructor(file: Path) {
     private val file = AsynchronousFileChannel.open(
@@ -76,9 +76,9 @@ class SectorFile private constructor(file: Path) {
     }
 
     private suspend fun asyncInit() {
-        val headerSize = this.file.aRead(header, 0L)
+        val headerSize = file.aRead(header, 0L)
         if (headerSize == -1) return writeHeader()
-        if (headerSize != 8192) LOGGER.warn("Region file {} has truncated header: {}", file, headerSize)
+        if (headerSize < 8192) Error.BULK_HEADER_TRUNCATED.raise(ChunkPos.ZERO, headerSize)
         for (i in 0..1023) {
             val alloc = allocs[i]
             if (alloc != 0) bitmap.force(getSectorNumber(alloc), getNumSectors(alloc))
@@ -121,13 +121,14 @@ class SectorFile private constructor(file: Path) {
         val alloc = refAlloc(index)
         if (alloc == 0) return null
         val chunk = ByteBuffer.allocate(getNumSectors(alloc) * 4096)
-        file.aRead(chunk, getSectorNumber(alloc) * 4096L)
+        val ret = file.aRead(chunk, getSectorNumber(alloc) * 4096L)
         relAlloc(alloc)
+        if (ret == -1) Error.BULK_TRUNCATED_FILE.raise(ChunkPos.ZERO, index)
         return chunk.flip()
     }
 
     suspend fun writeObject(index: Int, bytes: ByteBuffer) {
-        val sectorCount = sizeToSectors(bytes.remaining())
+        val sectorCount = computeSectors(bytes.remaining())
         val sectorStart = allocate(sectorCount)
         file.aWrite(bytes, sectorStart * 4096L)
         val thisVer = swapAlloc(index, packSectorAlloc(sectorStart, sectorCount))
@@ -144,18 +145,16 @@ class SectorFile private constructor(file: Path) {
         file.aWrite(snapshot, 0L)
     }
 
-    suspend fun closeAsync() {
-        val aggregator = ExceptionAggregator()
-        aggregator.runCaptured { padToFullSector() }
-        aggregator.runCaptured { writeHeader() }
-        aggregator.runCaptured { file.force(true) }
-        aggregator.runCaptured { file.close() }
-        aggregator.complete()
+    suspend fun closeAsync() = ExceptionAggregator().run<Unit> {
+        runCaptured { padToFullSector() }
+        runCaptured { writeHeader() }
+        runCaptured { file.force(true) }
+        runCaptured { file.close() }
     }
 
     private suspend fun padToFullSector() {
         val size = file.size().toInt()
-        val properSize = sizeToSectors(size) * 4096
+        val properSize = computeSectors(size) * 4096
         if (size != properSize) {
             val paddingBuffer = PADDING_BUFFER.duplicate()
             paddingBuffer.position(0)
@@ -164,7 +163,6 @@ class SectorFile private constructor(file: Path) {
     }
 
     companion object {
-        private val LOGGER = LogManager.getLogger()
         private val PADDING_BUFFER = ByteBuffer.allocateDirect(1)
         private val HEADER_WRITER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
@@ -176,6 +174,6 @@ class SectorFile private constructor(file: Path) {
 
         // 0x10000 is not an absolutely safe value,
         // but nobody sanely using a minecraft server shall have this many concurrent reads
-        const val freeMagic = 0x10000
+        private const val freeMagic = 0x10000
     }
 }

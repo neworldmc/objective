@@ -14,4 +14,10 @@ class ExceptionAggregator {
     fun complete() {
         if (exceptions.isNotEmpty()) throw exceptions.reduce { first, second -> first.addSuppressed(second); first }
     }
+
+    inline fun <R> run(block: ExceptionAggregator.()->R): R {
+        val ret = block()
+        complete()
+        return ret
+    }
 }
