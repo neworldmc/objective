@@ -19,20 +19,28 @@ private object DbFJWThreadFactory : ForkJoinPool.ForkJoinWorkerThreadFactory {
 }
 
 private class SyncDispatcher(private val delegate: CoroutineDispatcher) : CoroutineDispatcher() {
-    private val queue = LinkedList<Runnable>()
+    private val queue = ArrayDeque<Runnable>()
     override fun dispatch(context: CoroutineContext, block: Runnable) {
         if (synchronized(queue) {
+                    val start = queue.isEmpty()
                     queue.add(block)
-                    queue.size == 1
-                }) delegate.dispatch(context, Runnable { drain() })
+                    start
+                }) delegate.dispatch(context, Runnable { drain(block) })
     }
 
-    private tailrec fun drain() {
-        synchronized(queue) { queue.first }.run()
-        if (synchronized(queue) {
-                    queue.removeFirst()
-                    queue.isNotEmpty()
-                }) drain()
+    private tailrec fun drain(block: Runnable) {
+        block.run()
+        val next = spinTest()
+        if (next != null) drain(next)
+    }
+
+    private fun spinTest(): Runnable? {
+        for (i in 0 until 80) {
+            val next = synchronized(queue) { queue.run{ if (size > 1) apply { removeFirst() }.peekFirst() else null } }
+            if (next != null) return next
+            Thread.onSpinWait()
+        }
+        return synchronized(queue) { queue.apply { removeFirst() }.peekFirst() }
     }
 }
 
@@ -40,9 +48,18 @@ object Concurrency {
     private fun newWorkStealingPool() =
             ForkJoinPool(Runtime.getRuntime().availableProcessors(), DbFJWThreadFactory, null, true)
 
-    private val defaultConcurrentExecutor = newWorkStealingPool()
+    private val poolThroughput = newWorkStealingPool()
 
-    val defaultCoroutineContext = defaultConcurrentExecutor.asCoroutineDispatcher()
+    private val poolSync = newWorkStealingPool()
 
-    fun newSynchronizedCoroutineContext(): CoroutineDispatcher = SyncDispatcher(defaultCoroutineContext)
+    val defaultCoroutineContext = poolThroughput.asCoroutineDispatcher()
+
+    private val syncCoroutineContext = poolSync.asCoroutineDispatcher()
+
+    fun newSynchronizedCoroutineContext(): CoroutineDispatcher = SyncDispatcher(syncCoroutineContext)
+
+    fun join() {
+        poolThroughput.shutdown()
+        poolSync.shutdown()
+    }
 }
