@@ -1,14 +1,13 @@
 package site.neworld.objective.data
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
-import kotlinx.coroutines.asCoroutineDispatcher
 import site.neworld.objective.IBinaryAnvilEntryProvider
 import site.neworld.objective.utils.ChunkPos
 import site.neworld.objective.utils.ExceptionAggregator
 import java.io.File
-import java.util.concurrent.Executors
 
 class LevelStorage(private val folder: File) : AutoCloseable, IBinaryAnvilEntryProvider {
+    private val syncDispatch = Concurrency.newSynchronizedCoroutineContext()
     private val regionCache = Long2ObjectLinkedOpenHashMap<RegionStorage>()
     private val oversized = OversizeStorage(folder.toPath())
 
@@ -34,6 +33,6 @@ class LevelStorage(private val folder: File) : AutoCloseable, IBinaryAnvilEntryP
     override fun close() = ExceptionAggregator().run { for (v in regionCache.values) runCaptured { v.close() } }
 
     companion object {
-        private val asyncComputeContext = Executors.newWorkStealingPool().asCoroutineDispatcher()
+        private val asyncContext = Concurrency.defaultCoroutineContext
     }
 }

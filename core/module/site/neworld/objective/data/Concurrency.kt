@@ -1,31 +1,12 @@
 package site.neworld.objective.data
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.asCoroutineDispatcher
-import java.util.concurrent.*
+import java.util.*
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicInteger
-
-private object DbThreadFactoryCore : ThreadFactory {
-    private val counter = AtomicInteger(1)
-    private val group = System.getSecurityManager().let { if (it != null) it.threadGroup else Thread.currentThread().threadGroup }
-
-    override fun newThread(r: Runnable) = Thread(group, r, "[NWMC O-DB]${counter.getAndIncrement()}", 0).apply {
-        if (isDaemon) isDaemon = false
-        if (priority != Thread.NORM_PRIORITY) priority = Thread.NORM_PRIORITY
-    }
-}
-
-private object DbThreadFactory : ThreadFactory {
-    private var executor = ThreadPoolExecutor(0, Int.MAX_VALUE, 60L, TimeUnit.SECONDS,
-            LinkedBlockingQueue<Runnable>(), DbThreadFactoryCore)
-
-    override fun newThread(r: Runnable): Thread {
-        return CompletableFuture<Thread>().apply {
-        executor.execute {
-            this.complete(Thread.currentThread())
-            r.run()
-        }}.get()
-    }
-}
+import kotlin.coroutines.CoroutineContext
 
 private object DbFJWThreadFactory : ForkJoinPool.ForkJoinWorkerThreadFactory {
     private val counter = AtomicInteger(1)
@@ -37,17 +18,31 @@ private object DbFJWThreadFactory : ForkJoinPool.ForkJoinWorkerThreadFactory {
     }!!
 }
 
-@Suppress("MemberVisibilityCanBePrivate")
+private class SyncDispatcher(private val delegate: CoroutineDispatcher) : CoroutineDispatcher() {
+    private val queue = LinkedList<Runnable>()
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+        if (synchronized(queue) {
+                    queue.add(block)
+                    queue.size == 1
+                }) delegate.dispatch(context, Runnable { drain() })
+    }
+
+    private tailrec fun drain() {
+        synchronized(queue) { queue.first }.run()
+        if (synchronized(queue) {
+                    queue.removeFirst()
+                    queue.isNotEmpty()
+                }) drain()
+    }
+}
+
 object Concurrency {
-    fun newWorkStealingPool() =
+    private fun newWorkStealingPool() =
             ForkJoinPool(Runtime.getRuntime().availableProcessors(), DbFJWThreadFactory, null, true)
 
-    fun newSynchronizedExecutor() =
-        ThreadPoolExecutor(0, 1, 100L, TimeUnit.MILLISECONDS, LinkedBlockingQueue<Runnable>(), DbThreadFactory)
-
-    fun newSynchronizedCoroutineContext() = newSynchronizedExecutor().asCoroutineDispatcher()
-
-    val defaultConcurrentExecutor = newWorkStealingPool()
+    private val defaultConcurrentExecutor = newWorkStealingPool()
 
     val defaultCoroutineContext = defaultConcurrentExecutor.asCoroutineDispatcher()
+
+    fun newSynchronizedCoroutineContext(): CoroutineDispatcher = SyncDispatcher(defaultCoroutineContext)
 }

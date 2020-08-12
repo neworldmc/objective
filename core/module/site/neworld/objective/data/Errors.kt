@@ -1,13 +1,8 @@
 package site.neworld.objective.data
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import site.neworld.objective.utils.ChunkPos
-import java.time.LocalDateTime
-import java.util.concurrent.Executors
 
 enum class ErrorCategory {
     // Just some information about activities
@@ -64,16 +59,5 @@ enum class Error(private val binId: Int, private val category: ErrorCategory) {
     fun raise(pos: ChunkPos, vararg meta: Number): Nothing {
         ErrorRecorderGetter.recorder.accept(binId, category, pos, *meta)
         throw AnvilDbException(this, pos)
-    }
-}
-
-class ConsoleErrorRecorder : IErrorRecorder {
-    private val exec = Concurrency.newSynchronizedCoroutineContext()
-    override fun accept(binId: Int, category: ErrorCategory, pos: ChunkPos, vararg meta: Number) {
-        GlobalScope.launch(exec) {
-            print("[${LocalDateTime.now()}][$binId][${category.name}]{${pos.toLong()}")
-            for (i in meta) print(i)
-            println()
-        }
     }
 }
