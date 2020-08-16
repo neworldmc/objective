@@ -1,8 +1,6 @@
 package site.neworld.objective.data
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import site.neworld.objective.utils.ChunkPos
 import site.neworld.objective.utils.ExceptionAggregator
 import site.neworld.objective.utils.aRead
@@ -88,31 +86,27 @@ class SectorFile private constructor(file: Path) {
         file.aWrite(header, 0L)
     }
 
-    private fun allocate(sectors: Int) = synchronized(bitmap) { bitmap.allocate(sectors) }
-
-    private fun free(start: Int, sectors: Int) = synchronized(bitmap) { bitmap.free(start, sectors) }
-
-    private fun refAlloc(index: Int) = synchronized(allocs) {
+    private fun refAlloc(index: Int): Int {
         val res = allocs[index]
         if (res != 0) lockTable.addTo(res, 1)
-        res
+        return res
     }
 
-    private fun relAlloc(alloc: Int) = synchronized(allocs) {
+    private fun relAlloc(alloc: Int) {
         if (lockTable.addTo(alloc, -1) == freeMagic + 1) {
-            free(getSectorNumber(alloc), getNumSectors(alloc))
+            bitmap.free(getSectorNumber(alloc), getNumSectors(alloc))
             lockTable.remove(alloc)
         }
     }
 
-    private fun swapAlloc(index: Int, newAlloc: Int) = synchronized(allocs) {
+    private fun swapAlloc(index: Int, newAlloc: Int): Long {
         val thisAlloc = allocs[index]
         if (lockTable.containsKey(thisAlloc)) lockTable.addTo(thisAlloc, freeMagic)
-        else free(getSectorNumber(thisAlloc), getNumSectors(thisAlloc))
+        else bitmap.free(getSectorNumber(thisAlloc), getNumSectors(thisAlloc))
         allocs.put(index, newAlloc)
         val timestamp = (Instant.now().toEpochMilli() / 1000L).toInt()
         timestamps.put(index, timestamp)
-        synchronized(header) { ++headerMemVer }
+        return ++headerMemVer
     }
 
     suspend fun readObject(index: Int): ByteBuffer? {
@@ -127,19 +121,16 @@ class SectorFile private constructor(file: Path) {
 
     suspend fun writeObject(index: Int, bytes: ByteBuffer) {
         val sectorCount = computeSectors(bytes.remaining())
-        val sectorStart = allocate(sectorCount)
+        val sectorStart = bitmap.allocate(sectorCount)
         file.aWrite(bytes, sectorStart * 4096L)
         val thisVer = swapAlloc(index, packSectorAlloc(sectorStart, sectorCount))
-        GlobalScope.launch(HEADER_WRITER) { writeHeader(thisVer) }
+        writeHeader(thisVer)
     }
 
     private suspend fun writeHeader(onVer: Long) {
-        val snapshot: ByteBuffer
-        synchronized(header) {
-            if (onVer <= headerFileVer) return
-            headerFileVer = headerMemVer
-            snapshot = clone(header)
-        }
+        if (onVer <= headerFileVer) return
+        headerFileVer = headerMemVer
+        val snapshot: ByteBuffer = clone(header)
         file.aWrite(snapshot, 0L)
     }
 
@@ -162,7 +153,6 @@ class SectorFile private constructor(file: Path) {
 
     companion object {
         private val PADDING_BUFFER = ByteBuffer.allocateDirect(1)
-        private val HEADER_WRITER = Concurrency.newSynchronizedCoroutineContext()
 
         suspend fun open(file: Path): SectorFile {
             val result = SectorFile(file)

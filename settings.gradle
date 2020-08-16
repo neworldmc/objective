@@ -11,3 +11,5 @@ rootProject.name = 'objective'
 include 'core'
 include 'network'
 include 'server'
+include 'embeded'
+
