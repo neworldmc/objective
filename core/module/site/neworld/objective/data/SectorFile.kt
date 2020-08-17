@@ -1,6 +1,9 @@
 package site.neworld.objective.data
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import site.neworld.objective.utils.ChunkPos
 import site.neworld.objective.utils.ExceptionAggregator
 import site.neworld.objective.utils.aRead
@@ -123,15 +126,21 @@ class SectorFile private constructor(file: Path) {
         val sectorCount = computeSectors(bytes.remaining())
         val sectorStart = bitmap.allocate(sectorCount)
         file.aWrite(bytes, sectorStart * 4096L)
-        val thisVer = swapAlloc(index, packSectorAlloc(sectorStart, sectorCount))
-        writeHeader(thisVer)
+        writeHeader(swapAlloc(index, packSectorAlloc(sectorStart, sectorCount)))
     }
 
-    private suspend fun writeHeader(onVer: Long) {
-        if (onVer <= headerFileVer) return
-        headerFileVer = headerMemVer
-        val snapshot: ByteBuffer = clone(header)
-        file.aWrite(snapshot, 0L)
+    private var lastHeader: Deferred<Unit>? = null
+
+    private suspend fun writeHeader(onVer: Long) = coroutineScope {
+        lastHeader?.await()
+        if (onVer > headerFileVer) {
+            headerFileVer = headerMemVer
+            val snapshot: ByteBuffer = clone(header)
+            lastHeader = async {
+                file.aWrite(snapshot, 0L)
+                Unit
+            }
+        }
     }
 
     suspend fun closeAsync() = ExceptionAggregator().run<Unit> {
