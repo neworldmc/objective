@@ -42,8 +42,8 @@ private class AsynchronousRegionStorage(path: Path, oversize: OversizeStorage, p
     private var init: Deferred<Unit>? = null
     private var storage: RegionStorage? = null
     private val reorder = Short2ObjectOpenHashMap<ReorderData>()
-    private val context = Concurrency.newSynchronizedCoroutineContext()
-    private val scope = CoroutineScope(context)
+    private val scope = CoroutineScope(Concurrency.newSynchronizedCoroutineContext())
+    private val context = scope.coroutineContext
 
     init {
         init = GlobalScope.async(asyncContext) {
