@@ -37,9 +37,9 @@ class ByteTag private constructor(override val asByte: Byte) : NumericTag() {
             }
         }
 
+        private val cache = Array(256) { ByteTag((it - 128).toByte()) }
         private val ZERO = valueOf(0.toByte())
         private val ONE = valueOf(1.toByte())
-        private val cache = Array(256) { ByteTag((it - 128).toByte()) }
 
         fun valueOf(byte: Byte) = cache[128 + byte]
 

@@ -42,7 +42,8 @@ private class AsynchronousRegionStorage(path: Path, oversize: OversizeStorage, p
     private var init: Deferred<Unit>? = null
     private var storage: RegionStorage? = null
     private val reorder = Short2ObjectOpenHashMap<ReorderData>()
-    private val scope = CoroutineScope(Concurrency.newSynchronizedCoroutineContext())
+    private val job = SupervisorJob()
+    private val scope = CoroutineScope(Concurrency.newSynchronizedCoroutineContext() + job)
     private val context = scope.coroutineContext
 
     init {
@@ -77,7 +78,7 @@ private class AsynchronousRegionStorage(path: Path, oversize: OversizeStorage, p
     }
 
     suspend fun closeAsync() {
-        context[Job]?.join()
+        job.children.forEach { it.join() }
         storage().closeAsync()
     }
 
@@ -109,7 +110,8 @@ private class AsynchronousRegionStorage(path: Path, oversize: OversizeStorage, p
         return null
     }
 
-    private fun forceReorder(pos: Short) = reorder[pos] ?: reorder.put(pos, ReorderData()).apply { ++reference }
+    private fun forceReorder(pos: Short) =
+            (reorder[pos] ?: ReorderData().apply { reorder[pos] = this }).apply { ++reference }
 
     private fun releaseReorder(pos: Short, entry: ReorderData) {
         if (--entry.reference == 0) reorder.remove(pos)
@@ -117,7 +119,6 @@ private class AsynchronousRegionStorage(path: Path, oversize: OversizeStorage, p
 }
 
 class LevelStorage(private val folder: File, private val version: Compression = Compression.DEFLATE) : AutoCloseable, IBinaryAnvilEntryProvider {
-    private val syncContext = Concurrency.newSynchronizedCoroutineContext()
     private val regionCache = Long2ObjectLinkedOpenHashMap<AsynchronousRegionStorage>()
     private val closeSet = Long2ObjectOpenHashMap<Job>()
     private val oversized = OversizeStorage(folder.toPath())
@@ -132,7 +133,7 @@ class LevelStorage(private val folder: File, private val version: Compression = 
             val cacheRegion = regionCache.getAndMoveToFirst(regionKey)
             if (cacheRegion == null) {
                 if (regionCache.size >= 256) runCloseAsync(regionCache.lastLongKey(), regionCache.removeLast())
-                regionCache.putAndMoveToFirst(regionKey, open(pos, regionKey))
+                open(pos, regionKey).apply { regionCache.putAndMoveToFirst(regionKey, this) }
             } else cacheRegion
         }
     }

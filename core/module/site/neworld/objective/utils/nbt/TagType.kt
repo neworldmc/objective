@@ -36,6 +36,5 @@ object TagTypes {
                     DoubleTag.TYPE, ByteArrayTag.TYPE, StringTag.TYPE, ListTag.TYPE, CompoundTag.TYPE, IntArrayTag.TYPE,
                     LongArrayTag.TYPE)
 
-    @JvmStatic
     fun getType(id: Int): TagType<*> = if (id >= 0 && id < TYPES.size) TYPES[id] else createInvalid(id)
 }

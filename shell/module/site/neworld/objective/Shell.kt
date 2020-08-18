@@ -93,11 +93,11 @@ fun main() {
     }
     Machine.boot(getDir())
     runBlocking {
-        //try {
+        try {
             runLoop()
-        //} catch (e: Throwable) {
-        //    println(e)
-        //}
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
     }
     Machine.shutdown()
     Concurrency.join()
