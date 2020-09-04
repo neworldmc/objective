@@ -1,4 +1,5 @@
 plugins {
+    id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm'
 }
 
@@ -13,13 +14,12 @@ dependencies {
     implementation 'io.netty:netty-all:4.1.45.Final'
 }
 
-sourceSets {
-    main {
-        java { srcDirs = ['module']}
-    }
-}
+sourceSets { main { java { srcDirs = ['module'] } } }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = '11'
+compileKotlin { kotlinOptions.jvmTarget = '11' }
+
+publishing {
+    publications { maven(MavenPublication) { from components.java } }
+    confRepo(delegate)
 }
 

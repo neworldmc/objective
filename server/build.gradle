@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm'
     id 'com.github.johnrengelman.shadow'
 }
@@ -34,4 +35,9 @@ compileKotlin {
 
 application {
     mainClassName 'site.neworld.objective.ObjectiveKt'
+}
+
+publishing {
+    publications { maven(MavenPublication) { from components.java } }
+    confRepo(delegate)
 }

@@ -5,14 +5,14 @@ buildscript {
 }
 
 plugins {
+    id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm' version "$kotlin_version" apply false
     id 'com.github.johnrengelman.shadow' version "$shadow_version" apply false
 }
 
-group 'site.neworld'
-version '0.1-SNAPSHOT'
-
 allprojects {
+    group 'site.neworld.objective'
+    version '0.1-SNAPSHOT'
     repositories {
         mavenCentral()
         jcenter()
@@ -20,6 +20,15 @@ allprojects {
     buildDir = "${getRootDir()}/build/${project.name}"
 }
 
-subprojects {
-    version = '1.0'
+def confRepo(delegate) {
+    delegate.repositories {
+        maven {
+            name 'nexus'
+            url = project.repoUri
+            credentials {
+                username project.repoUser
+                password project.repoPassword
+            }
+        }
+    }
 }
