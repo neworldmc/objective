@@ -13,6 +13,6 @@ class ChunkPos(val x: Int, val z: Int) {
     companion object {
         val ZERO = ChunkPos(0,0)
         val INVALID_CHUNK_POS = asLong(1875016, 1875016)
-        fun asLong(x: Int, z: Int) = x.toLong() and 4294967295L or (z.toLong() and 4294967295L) shl 32
+        fun asLong(x: Int, z: Int) = (x.toLong() and 4294967295L) or ((z.toLong() and 4294967295L) shl 32)
     }
 }

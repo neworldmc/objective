@@ -155,5 +155,5 @@ class LevelStorage(private val folder: File, private val version: Compression = 
 
     private fun path(pos: ChunkPos) = File(folder, "r.${pos.regionX}.${pos.regionZ}.mca").toPath()
 
-    private fun getKey(pos: ChunkPos) = pos.regionX.toLong() or (pos.regionZ.toLong() shl 5)
+    private fun getKey(pos: ChunkPos) = ChunkPos.asLong(pos.regionX, pos.regionZ)
 }

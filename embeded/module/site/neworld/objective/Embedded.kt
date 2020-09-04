@@ -19,9 +19,12 @@ object Controller {
 
     private fun stop() {
         Concurrency.join()
+        app?.close()
+        app = null
     }
 
     fun open(path: File): LevelStorage {
+        synchronized(this) { if (counter++ == 0) start() }
         return LevelStorage(path)
     }
 
