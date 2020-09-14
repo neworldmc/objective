@@ -1,5 +1,7 @@
 package site.neworld.objective
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.koin.core.context.startKoin
 import site.neworld.objective.data.Concurrency
@@ -60,6 +62,13 @@ object Machine {
         }
     }
 
+    suspend fun readSilent(x: Int, z: Int) {
+        try {
+            if (active == null) return println("No storage selected")
+            active!!.get(ChunkPos(x, z))
+        } catch(e: Exception) {}
+    }
+
     fun getActive() = activeName
 }
 
@@ -73,6 +82,22 @@ tailrec suspend fun runLoop() {
         "close" -> Machine.close(Console.readLn())
         "use" -> Machine.use(Console.readLn())
         "read" -> Machine.read(Console.readInt(), Console.readLnInt())
+        "test" -> {
+            for (index in 0..20) {
+                val start = System.currentTimeMillis()
+                println("test[$index/20] started on $start")
+                GlobalScope.launch {
+                    for (i in -100..100)
+                        for (j in -100..100)
+                            GlobalScope.launch {
+                                Machine.readSilent(i, j)
+                            }
+                }.join()
+                val end = System.currentTimeMillis()
+                val elapsed = end - start
+                println("test[$index/20] ended on $end, elapsed $elapsed ms")
+            }
+        }
         else -> println("unrecognized command: $command ${Console.readLn()}")
     }
     if (!exit) runLoop()

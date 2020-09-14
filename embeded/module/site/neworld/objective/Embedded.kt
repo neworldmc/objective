@@ -2,6 +2,7 @@ package site.neworld.objective
 
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 import site.neworld.objective.data.Concurrency
 import site.neworld.objective.data.LevelStorage
 import site.neworld.objective.data.consoleRecorder
@@ -21,6 +22,7 @@ object Controller {
         Concurrency.join()
         app?.close()
         app = null
+        stopKoin()
     }
 
     fun open(path: File): LevelStorage {

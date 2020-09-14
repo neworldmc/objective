@@ -1,6 +1,7 @@
 package site.neworld.objective.data
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.*
@@ -48,18 +49,15 @@ object Concurrency {
     private fun newWorkStealingPool() =
             ForkJoinPool(Runtime.getRuntime().availableProcessors(), DbFJWThreadFactory, null, true)
 
-    private val poolThroughput = newWorkStealingPool()
-
     private val poolSync = newWorkStealingPool()
 
-    val defaultCoroutineContext = poolThroughput.asCoroutineDispatcher()
+    val defaultCoroutineContext = Dispatchers.Default
 
     private val syncCoroutineContext = poolSync.asCoroutineDispatcher()
 
     fun newSynchronizedCoroutineContext(): CoroutineDispatcher = SyncDispatcher(syncCoroutineContext)
 
     fun join() {
-        poolThroughput.shutdown()
         poolSync.shutdown()
     }
 }

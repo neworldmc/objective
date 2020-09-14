@@ -33,9 +33,9 @@ compileKotlin {
     kotlinOptions { freeCompilerArgs = ["-XXLanguage:+InlineClasses"] }
 }
 
-application {
-    mainClassName 'site.neworld.objective.ObjectiveKt'
-}
+application {mainClassName 'site.neworld.objective.ObjectiveKt' }
+
+shadowJar { minimize() }
 
 publishing {
     publications { maven(MavenPublication) { from components.java } }

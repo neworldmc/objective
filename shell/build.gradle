@@ -1,5 +1,6 @@
 plugins {
     id 'maven-publish'
+    id 'application'
     id 'org.jetbrains.kotlin.jvm'
     id 'com.github.johnrengelman.shadow'
 }
@@ -17,6 +18,10 @@ dependencies {
 sourceSets { main { java { srcDirs = ['module'] } } }
 
 compileKotlin { kotlinOptions.jvmTarget = '11' }
+
+application { mainClassName 'site.neworld.objective.ShellKt' }
+
+shadowJar { minimize() }
 
 publishing {
     publications { maven(MavenPublication) { from components.java } }
