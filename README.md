@@ -1,4 +1,7 @@
-# Objective
+# Objective [![LICENSE](https://img.shields.io/github/license/neworldmc/objective)]() [![CircleCI](https://circleci.com/gh/neworldmc/objective.svg?style=shield)](https://circleci.com/gh/neworldmc/objective) [![BCH compliance](https://bettercodehub.com/edge/badge/neworldmc/objective?branch=master)](https://bettercodehub.com/)
+
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/neworldmc/objective)
+![GitHub repo size](https://img.shields.io/github/repo-size/neworldmc/objective)
 
 A high performance async Minecraft Anvil chunk storage server and library 
 designed to achieve high throughput and consistent latency
